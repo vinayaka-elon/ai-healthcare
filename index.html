@@ -240,6 +240,10 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
   function sl(id,q,lo,hi,help){ return {t:"sl",id:id,q:q,lo:lo,hi:hi,help:help}; }
   function mc(id,q,opts,help){ return {t:"mc",id:id,q:q,opts:opts,help:help}; }
   function hd(q){ return {t:"hd",q:q}; }
+  function shuffle(a){
+    for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t; }
+    return a;
+  }
 
   var CORE = function(k){ return [
     sl(k+"_t1","I trust this result.","Not at all","Completely"),
@@ -416,7 +420,58 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
           "No preference"])
     ]},
 
-    {id:"close", step:"Part five", title:"Closing", items:[
+    {id:"scribe", step:"Part five", title:"A different use of AI", items:[
+      {t:"bl",q:'<p>The rest of this study has been about software reading an X-ray. This page asks ' +
+       'about a different use of the same kind of software.</p>' +
+       '<p>At your next appointment, your doctor uses a program that listens to the conversation ' +
+       'between you and your doctor and automatically writes the note that goes into your medical ' +
+       'record. Your doctor reads the note, makes any corrections, and approves it before it is ' +
+       'saved. The note is then available to you in your patient portal.</p>'},
+
+      {t:"mc",id:"sc_consent",
+       q:"How do you think patients should be told that this program is being used?",
+       opts:["Patients should be asked for permission before the appointment",
+             "Patients should be asked for permission at the start of the visit",
+             "Patients should be told at the start of the visit and allowed to decline",
+             "A notice posted in the clinic is enough",
+             "No notice is needed"]}
+    ].concat(shuffle([
+      sl("sc_comfort","I would be comfortable with my doctor using this program during my visit.",
+         "Strongly disagree","Strongly agree"),
+      sl("dx_comfort","I would be comfortable with my doctor using an AI system to read my X-ray.",
+         "Strongly disagree","Strongly agree"),
+      sl("sc_trust","I would trust the note this program produces to be accurate.",
+         "Strongly disagree","Strongly agree"),
+      sl("dx_trust","I would trust the reading an AI system produces of my X-ray to be accurate.",
+         "Strongly disagree","Strongly agree"),
+      sl("sc_uniq","This program would fail to take account of what is particular about me.",
+         "Strongly disagree","Strongly agree"),
+      sl("dx_uniq","An AI system reading my X-ray would fail to take account of what is particular " +
+         "about me.","Strongly disagree","Strongly agree"),
+      sl("sc_rec","I would be comfortable having my conversation with my doctor recorded for this " +
+         "purpose.","Strongly disagree","Strongly agree"),
+      sl("sc_priv","Using this program would intrude on my privacy.",
+         "Strongly disagree","Strongly agree"),
+      sl("sc_attn","If my doctor used this program, my doctor would pay closer attention to me " +
+         "during the visit.","Strongly disagree","Strongly agree"),
+      sl("sc_hold","If this program were being used, I would hold back from telling my doctor about " +
+         "sensitive matters.","Strongly disagree","Strongly agree"),
+      sl("sc_resp","If the note contained a serious error, my doctor would be answerable for it.",
+         "Strongly disagree","Strongly agree"),
+      sl("sc_see","I would want to read the note this program produced and have a way to correct any " +
+         "errors in it.","Strongly disagree","Strongly agree")
+    ])).concat([
+      sl("sc_willing","I would be willing to have my doctor use this program at my next visit.",
+         "Strongly disagree","Strongly agree"),
+      {t:"mc",id:"sc_vs_dx",
+       q:"Taking the two together, which would you be more comfortable with?",
+       opts:["A program listening to the visit and writing the note",
+             "An AI system reading my X-ray",
+             "Equally comfortable with both",
+             "Uncomfortable with both"]}
+    ])},
+
+    {id:"close", step:"Part six", title:"Closing", items:[
       mc("source","Which of these is closest to how the result you read earlier was produced?",
          ["An AI system produced it on its own",
           "An AI system produced it and a radiologist verified it",
@@ -692,7 +747,7 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
         '<p>At the end you will be asked to imagine that the same result had been wrong and that ' +
         'the fracture had been missed, once where a radiologist read the X-ray and once where ' +
         'software read it.</p>' +
-        '<p>It takes about twenty minutes. There are no right or wrong answers to most of the ' +
+        '<p>It takes about twenty-five minutes. There are no right or wrong answers to most of the ' +
         'questions, and a few knowledge questions have a correct answer and an option saying you do ' +
         'not know, which is an acceptable answer.</p>' +
         '<ul><li>The result you will read is not a real patient result and the X-ray is an example ' +

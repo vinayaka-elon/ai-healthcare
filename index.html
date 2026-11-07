@@ -191,6 +191,8 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
 .end{text-align:center;padding:var(--s6) 0;}
 .end h1{font-size:var(--t1);} .end p{font-family:var(--serif);font-size:17px;color:var(--body);
         margin-top:var(--s3);}
+  .q input.em{width:100%;max-width:340px;padding:10px 12px;font:inherit;
+    border:1px solid var(--line);border-radius:8px;background:var(--surface)}
 </style>
 
 <div class="band">
@@ -245,10 +247,13 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
     return a;
   }
 
-  var CORE = function(k){ return [
-    sl(k+"_t1","I trust this result.","Not at all","Completely"),
-    sl(k+"_t2","I trust the way this result was produced.","Not at all","Completely"),
-    sl(k+"_t3","I would rely on this result.","Not at all","Completely"),
+  var CH5 = ["Much less than before","A little less than before","No change",
+             "A little more than before","Much more than before"];
+  var CH5W = ["Much less worried","A little less worried","No change",
+              "A little more worried","A lot more worried"];
+
+  /* The costed verification choice, asked identically at all three stages. */
+  var ACT = function(k){ return [
     mc(k+"_i1","What would you do about this result?",
        ["Accept the result","Check it further"]),
     {t:"mc",id:k+"_i2",q:"Which would you do?",only:k+"_i1=1",
@@ -256,11 +261,44 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
            "Ask for a second doctor to read the same X-ray. $25, result in three days.",
            "Ask for the X-ray to be repeated. $60, second visit required.",
            "Look the finding up yourself. Free, ten minutes.",
-           "Wait and see whether the wrist improves. Free, delays treatment."]},
+           "Wait and see whether the wrist improves. Free, delays treatment."]}
+  ];};
+
+  /* Stage one. Eight items, all absolute, establishing the baseline that the
+     two later stages are each measured against. */
+  var S1 = function(k){ return [
+    sl(k+"_t1","I trust this result.","Not at all","Completely"),
+    sl(k+"_t2","I trust the way this result was produced.","Not at all","Completely"),
+    sl(k+"_t3","I would rely on this result.","Not at all","Completely")
+  ].concat(ACT(k), [
     sl(k+"_w","How worried does this result make you?","Not at all","Extremely"),
     sl(k+"_u","How well do you feel you understand how this result was produced?",
-       "Not at all","Completely")
-  ];};
+       "Not at all","Completely"),
+    sl(k+"_leg","Using an AI system this way is an appropriate thing for a hospital to do.",
+       "Strongly disagree","Strongly agree"),
+    sl(k+"_acc","If this result turned out to be wrong, it is clear who would be answerable for it.",
+       "Strongly disagree","Strongly agree")
+  ]); };
+
+  /* Stages two and three. Seven items, six of them scored as signed change
+     against stage one, followed by the same costed choice. */
+  var CHG = function(k){ return [
+    {t:"mc",id:k+"_c1",opts:CH5,
+     q:"Compared with the first version you saw, how much do you trust the result now?"},
+    {t:"mc",id:k+"_c2",opts:CH5,
+     q:"Compared with the first version you saw, how willing would you be to rely on it now?"},
+    {t:"mc",id:k+"_c3",opts:CH5,
+     q:"Compared with the first version you saw, how well do you understand how the result "+
+       "was produced?"},
+    {t:"mc",id:k+"_c4",opts:CH5W,
+     q:"Compared with the first version you saw, how worried does the result make you now?"},
+    {t:"mc",id:k+"_c5",opts:CH5,
+     q:"Compared with the first version you saw, how appropriate does it now seem for a "+
+       "hospital to use an AI system this way?"},
+    {t:"mc",id:k+"_c6",opts:CH5,
+     q:"Compared with the first version you saw, how clear is it now who would be answerable "+
+       "if the result were wrong?"}
+  ].concat(ACT(k)); };
 
   var SCREENS = [
     {id:"consent", kind:"consent"},
@@ -279,6 +317,12 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
              "Native Hawaiian or Pacific Islander","White","Prefer to self-describe",
              "Prefer not to say"]},
       mc("ins","Do you currently have health insurance coverage?",["Yes","No","Not sure"]),
+      {t:"em",id:"draw_email",
+       q:"Email address, if you would like to be entered in the gift card draw.",
+       help:"Ten people who complete this study will be selected at random to receive a $50 " +
+            "gift card. This is optional and you may leave it blank. Your address is held " +
+            "separately from your answers, is used only to contact you if you are selected, " +
+            "and is deleted once the draw has been made."},
 
       hd("Health and care experience"),
       mc("visits","How often do you see a healthcare provider?",
@@ -355,15 +399,15 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
 
     {id:"s1", step:"Part two, stage one", title:"Your result", stim:"1",
      lead:"Imagine the result below is your own. Read it, then answer the questions underneath.",
-     items:CORE("s1")},
+     items:S1("s1")},
 
-    {id:"s2", step:"Part two, stage two", title:"The same result, with more detail", stim:"2",
-     lead:"The same result is shown again. This time you can see what the software did.",
-     items:CORE("s2")},
+    {id:"s2", step:"Part two, stage two", title:"The same result, with an explanation of how the AI works", stim:"2",
+     lead:"The same result is shown again. This time you can see what the software did. The questions underneath ask how this compares with the first version you saw.",
+     items:CHG("s2")},
 
-    {id:"s3", step:"Part two, stage three", title:"The same result, after review", stim:"3",
-     lead:"The same result is shown once more, with one further piece of information.",
-     items:CORE("s3")},
+    {id:"s3", step:"Part two, stage three", title:"The same result, verified by a radiologist", stim:"3",
+     lead:"The same result is shown once more, with one further piece of information. The questions underneath ask how this compares with the first version you saw.",
+     items:CHG("s3")},
 
     {id:"post", step:"Part three", title:"What you took from it", items:[
       hd("Understanding"),
@@ -487,19 +531,6 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
              "A robot or machine in the scanning room",
              "Something else",
              "I did not picture anything in particular"]},
-      {t:"mc",id:"howbuilt",
-       q:"From what you read, how was the system in this study built?",
-       opts:["It was shown many X-rays that had already been read and labelled, and learned the " +
-             "patterns in them",
-             "It was given the medical textbooks that doctors study",
-             "It writes its answers the way a chatbot writes text",
-             "A doctor wrote out every rule it follows",
-             "I don't know"]},
-      {t:"ck",id:"willing",q:"For which of these would you accept a diagnosis produced with the help " +
-       "of an AI system?",help:"Select all that apply.",
-       opts:["A broken bone or other injury","Routine screening, such as a mammogram",
-             "A skin problem","A cancer diagnosis","A mental health condition",
-             "None of these"]},
       {t:"mc",id:"choose",
        q:"For your own diagnosis, which of these would you prefer?",
        help:"Cost is what you would pay yourself.",
@@ -509,15 +540,16 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
              "AI reads it alone. $40, result in ten minutes.",
              "Unsure"]},
       mc("impact","Which approach do you believe will have the most positive impact on healthcare?",
-         ["AI alone","AI with a clinician","Clinicians alone","Unsure"]),
+         ["AI alone","AI with a clinician","Clinicians alone",
+          "AI writing the visit notes, with clinicians doing the diagnosis","Unsure"]),
       sl("impact2","What impact do you believe AI will have on healthcare?",
          "Very negative","Very positive"),
       {t:"txt",id:"open",q:"In your own words, what would have made you more confident about AI " +
        "being used in your diagnosis?"},
       {t:"mc",id:"serious",
        q:"Please answer this one honestly. How carefully did you answer the questions in this study?",
-       help:"Your answer does not affect your payment or credit in any way. It only tells us which " +
-            "responses to use.",
+       help:"Your answer does not affect your entry into the gift card draw in any way. It only " +
+            "tells us which responses to use.",
        opts:["Very carefully","Fairly carefully",
              "Not very carefully, my answers should not be used"]}
     ]},
@@ -525,13 +557,116 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
     {id:"end", kind:"end"}
   ];
 
+
+  /* ================= submission =================
+     Posts to a Google Apps Script web app. Checkpoints at section
+     boundaries, so a participant who abandons part way still leaves a
+     usable partial record. ============================================ */
+  var ENDPOINT = "https://script.google.com/macros/s/AKfycbygn_ruyMnH06lJw_jnZ2wzFZXcMFAlYh2dopMeqJjkSV_Geh7aXl1DoqaskzPizXlH/exec";
+  var TOKEN    = "ce2bc3ec6d394eb0ba01efdbcec9dd540993299e";
+  var VER      = "staged-v2.1";
+
+  /* Recruitment channel, taken from the link: ...?c=class | conf | health.
+     Recorded so the analysis can compare who each channel brought in. */
+  var CHANNEL = (function(){
+    try {
+      var m = /[?&]c=([a-z0-9_-]{1,16})/i.exec(location.search);
+      return m ? m[1].toLowerCase() : "";
+    } catch(e){ return ""; }
+  })();
+
+  var SID = (function(){
+    var v; try { v = sessionStorage.getItem("sid"); } catch(e){}
+    if (!v) {
+      v = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+          : "s-" + Date.now() + "-" + Math.random().toString(36).slice(2,10);
+      try { sessionStorage.setItem("sid", v); } catch(e){}
+    }
+    return v;
+  })();
+
+  /* text/plain keeps the request simple, so the browser sends no CORS
+     preflight, which Apps Script does not answer. */
+  function post(payload){
+    return fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload),
+      redirect: "follow",
+      keepalive: true
+    }).then(function(r){ return r.text(); });
+  }
+
+  /* One in-flight post at a time, with the newest state winning. Checkpoints
+     are fire and forget; the final save reports back. */
+  var inflight = false, queued = null;
+  function send(payload, done){
+    if (inflight) { queued = {p: payload, d: done}; return; }
+    inflight = true;
+    var tries = 0;
+    (function attempt(){
+      tries++;
+      post(payload).then(function(t){
+        if (t && t.indexOf('"ok":true') > -1) { finish(true); }
+        else if (tries < 3) { setTimeout(attempt, tries*2500); }
+        else { finish(false); }
+      }).catch(function(){
+        if (tries < 3) setTimeout(attempt, tries*2500); else finish(false);
+      });
+    })();
+    function finish(ok){
+      inflight = false;
+      if (done) done(ok, SID);
+      if (queued) { var q = queued; queued = null; send(q.p, q.d); }
+    }
+  }
+
+  function record(at, complete, done){
+    var copy = {};
+    for (var k in D) if (k !== "draw_email") copy[k] = D[k];
+    send({ token:TOKEN, sid:SID, ver:VER, channel:CHANNEL,
+           at:at, complete:!!complete, hp:"", data:copy }, done);
+  }
+
+  /* The address travels on its own, with no sid and no timestamp, so the two
+     sheets cannot be joined. */
+  function submitDrawEmail(addr){
+    if (!addr) return;
+    post({ token:TOKEN, kind:"email", hp:"", email:addr }).catch(function(){});
+  }
+
+  /* Checkpoints. Called from render() as each section is left behind. */
+  var seenCheckpoint = {};
+  function checkpoint(name){
+    if (seenCheckpoint[name]) return;
+    seenCheckpoint[name] = true;
+    record(name, false, null);
+  }
+
+  /* Fires once, when the closing screen is reached. */
+  var sent = false;
+  function sendAll(){
+    if (sent) return; sent = true;
+    D.finished = new Date().toISOString();
+    var stat = document.getElementById("sendstat");
+    var addr = (D.draw_email || "").trim();
+    record("end", true, function(ok){
+      if (!stat) return;
+      stat.textContent = ok
+        ? "Your answers have been recorded."
+        : "Your answers could not be sent. Please show this code to the "
+          + "researcher: " + SID.slice(0,8);
+      if (!ok) sent = false;
+    });
+    if (addr) submitDrawEmail(addr);
+  }
+
   var si = 0;
 
   /* ---------- stimulus ---------- */
   /* Between-subjects factor: how the system is specified. Constant for a given
      participant across all three stages. Affirmative specification, no negation. */
-  var LAB = Math.random() < 0.5 ? 0 : 1;          /* 0 generic label, 1 specified */
-  D.label_cond = LAB ? "specified" : "generic";
+  var LAB = 0;   /* no between-subjects arm; every participant reads the same instrument */
 
   var SPEC = " The system is a pattern recognition model. It was built by showing it many thousands " +
              "of wrist X-rays that radiologists had already read and labelled, and it learned to pick " +
@@ -724,6 +859,8 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
       }
       if(it.t==="txt") h+='<textarea data-tx="'+it.id+'" placeholder="Optional">'+
         esc(D[it.id]||"")+'</textarea>';
+      if(it.t==="em") h+='<input type="email" class="em" data-tx="'+it.id+'" ' +
+        'autocomplete="email" placeholder="Optional" value="'+esc(D[it.id]||"")+'">';
       h+='</div>';
     });
     return h;
@@ -761,10 +898,11 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
           ["Yes, I agree to take part","No, I do not wish to take part"])])+'</div>';
     } else if(s.kind==="end"){
       h='<div class="end"><h1>Thank you.</h1>' +
-        '<p>Your responses have been recorded. Nothing you read in this study was a real patient ' +
+        '<p>Nothing you read in this study was a real patient ' +
         'result, and the missed fracture you were asked to imagine at the end did not happen. The ' +
         'figures given for how often fractures are missed are drawn from published studies of ' +
-        'emergency department radiology and are accurate.</p></div>';
+        'emergency department radiology and are accurate.</p>' +
+        '<p id="sendstat" class="intro">Sending your answers.</p></div>';
     } else {
       h='<div class="step">'+esc(s.step)+'</div><h1 class="ttl">'+esc(s.title)+'</h1>';
       if(s.lead) h+='<div class="intro"><p>'+esc(s.lead)+'</p></div>';
@@ -784,6 +922,8 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
         '<span class="note">Step '+(si+1)+' of '+SCREENS.length+'</span></div>';
     }
     document.getElementById("screen").innerHTML=h;
+    if(s.id && /^(pre|s1|s2|s3|post|att|close)$/.test(s.id)) checkpoint(s.id);
+    if(s.kind==="end") sendAll();
     if(s.stim==="2"){ st=0; seen=false; stopS(); paintSteps(); }
     syncGate();
     bind();

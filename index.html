@@ -193,6 +193,10 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
         margin-top:var(--s3);}
   .q input.em{width:100%;max-width:340px;padding:10px 12px;font:inherit;
     border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+  .consent .chd{font-weight:600;color:var(--ink);margin:var(--s4) 0 var(--s1);}
+  .consent .chd:first-child{margin-top:0;}
+  .consent .cfoot{margin-top:var(--s4);padding-top:var(--s3);
+    border-top:1px solid var(--line);font-size:.92em;color:var(--mute);}
 </style>
 
 <div class="band">
@@ -319,7 +323,7 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
       mc("ins","Do you currently have health insurance coverage?",["Yes","No","Not sure"]),
       {t:"em",id:"draw_email",
        q:"Email address, if you would like to be entered in the gift card draw.",
-       help:"Ten people who complete this study will be selected at random to receive a $50 " +
+       help:"Twenty people who complete this study will be selected at random to receive a $50 " +
             "gift card. This is optional and you may leave it blank. Your address is held " +
             "separately from your answers, is used only to contact you if you are selected, " +
             "and is deleted once the draw has been made."},
@@ -872,29 +876,64 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
     document.getElementById("prog").style.width=(si/(SCREENS.length-1)*100)+"%";
 
     if(s.kind==="consent"){
-      h='<div class="step">Before you begin</div><h1 class="ttl">What this study involves</h1>' +
+      h='<div class="step">Before you begin</div>' +
+        '<h1 class="ttl">Informed consent</h1>' +
         '<div class="consent" style="margin-top:var(--s4)">' +
-        '<p>This study asks how people understand and judge a medical test result when a computer ' +
-        'program has been involved in producing it. You will read one X-ray result three times, each ' +
-        'time with a little more information about how it was produced, and answer a short set of ' +
-        'questions after each.</p>' +
+
+        '<p class="chd">What this study is about</p>' +
+        '<p>This study asks how people understand and judge a medical test result when a ' +
+        'computer program has been involved in producing it. You will read one X-ray result ' +
+        'three times, once with the disclosure on its own, once with an explanation of how the ' +
+        'result was reached, and once with a note that a radiologist read the X-ray as well and ' +
+        'confirmed the finding, and answer a short set of questions after each.</p>' +
+
+        '<p class="chd">What you will see</p>' +
         '<p>In the scenario you will read, the AI system is given the X-ray image on its own. ' +
         'It is not given the name of the patient, the age, the medical history or any other ' +
         'personal information.</p>' +
         '<p>At the end you will be asked to imagine that the same result had been wrong and that ' +
         'the fracture had been missed, once where a radiologist read the X-ray and once where ' +
         'software read it.</p>' +
-        '<p>It takes about twenty-five minutes. There are no right or wrong answers to most of the ' +
-        'questions, and a few knowledge questions have a correct answer and an option saying you do ' +
-        'not know, which is an acceptable answer.</p>' +
-        '<ul><li>The result you will read is not a real patient result and the X-ray is an example ' +
-        'image.</li>' +
-        '<li>Taking part is voluntary and you may stop at any point.</li>' +
-        '<li>Your answers are recorded without your name attached.</li>' +
-        '<li>There is no risk to you beyond that of ordinary everyday activity.</li></ul>' +
+        '<p>The result you will read is not a real patient result, and the X-ray is an example ' +
+        'image generated for this study.</p>' +
+
+        '<p class="chd">How long it takes</p>' +
+        '<p>About twenty-seven minutes, completed in one sitting. There are no right or wrong ' +
+        'answers to most of the questions. A few knowledge questions have a correct answer and ' +
+        'an option saying you do not know, which is an acceptable answer.</p>' +
+
+        '<p class="chd">Taking part is voluntary</p>' +
+        '<p>You may skip any question and you may stop at any point without giving a reason. ' +
+        'If you learned about this study through one of your classes, your decision to take part ' +
+        'has no bearing on your grade.</p>' +
+
+        '<p class="chd">Risks</p>' +
+        '<p>The risks are minimal. Reading a hypothetical diagnosis, and imagining that it had ' +
+        'been missed, may be mildly uncomfortable.</p>' +
+
+        '<p class="chd">Privacy</p>' +
+        '<p>Your answers are recorded without your name attached and without your IP address. ' +
+        'If you choose to enter the gift card draw you will be asked for an email address, which ' +
+        'is stored separately from your answers, is never joined to them, is used only to contact ' +
+        'you if you are selected, and is deleted once the draw has been made.</p>' +
+
+        '<p class="chd">Compensation</p>' +
+        '<p>Twenty people who complete the study will be selected at random to receive a $50 gift ' +
+        'card. Entering the draw is optional and is done by giving an email address early in the ' +
+        'study.</p>' +
+
+        '<p class="chd">Who to contact</p>' +
         '<p>Questions about this study can go to the principal investigator, Vinayaka Gude, ' +
-        'Department of Management and Entrepreneurship, Elon University, vgude@elon.edu.</p></div>' +
-        '<div class="qs" id="qs">'+itemsHtml([mc("consent","Do you agree to take part?",
+        'Department of Management and Entrepreneurship, Elon University, vgude@elon.edu. ' +
+        'Questions about your rights as a research participant can go to Young Do Kim, Ph.D., ' +
+        'Chair, Elon University Institutional Review Board, (336) 278-5352, ykim4@elon.edu.</p>' +
+
+        '<p class="cfoot">This study was reviewed by the Elon University Institutional Review ' +
+        'Board and determined exempt under 45 CFR 46, protocol 26-3685. You may wish to print or ' +
+        'save this page for your records.</p>' +
+        '</div>' +
+        '<div class="qs" id="qs">'+itemsHtml([mc("consent",
+          "Do you agree to take part?",
           ["Yes, I agree to take part","No, I do not wish to take part"])])+'</div>';
     } else if(s.kind==="end"){
       h='<div class="end"><h1>Thank you.</h1>' +

@@ -566,8 +566,8 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
      Posts to a Google Apps Script web app. Checkpoints at section
      boundaries, so a participant who abandons part way still leaves a
      usable partial record. ============================================ */
-  var ENDPOINT = "https://script.google.com/macros/s/AKfycbygn_ruyMnH06lJw_jnZ2wzFZXcMFAlYh2dopMeqJjkSV_Geh7aXl1DoqaskzPizXlH/exec";
-  var TOKEN    = "ce2bc3ec6d394eb0ba01efdbcec9dd540993299e";
+  var ENDPOINT = "https://script.google.com/macros/s/AKfycbxVd_SUp6Tm4-QSyua0fnD8cWWjo-tSkxgsKDyxjxvMYKQ1WicbSMh5AO2SySJ9qIpd/exec";
+  var TOKEN    = "1e4fb1f8804a475191ff61d53526901560681ce8";
   var VER      = "staged-v2.1";
 
   /* Recruitment channel, taken from the link: ...?c=class | conf | health.
@@ -601,6 +601,14 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
     }).then(function(r){ return r.text(); });
   }
 
+  /* Reads the server's reply. Parsed properly, with a loose fallback in case
+     an intermediary rewrites the body. */
+  function okReply(t){
+    if (!t) return false;
+    try { return JSON.parse(t).ok === true; } catch(e){}
+    return /"ok"\s*:\s*true/.test(t);
+  }
+
   /* One in-flight post at a time, with the newest state winning. Checkpoints
      are fire and forget; the final save reports back. */
   var inflight = false, queued = null;
@@ -611,16 +619,16 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
     (function attempt(){
       tries++;
       post(payload).then(function(t){
-        if (t && t.indexOf('"ok":true') > -1) { finish(true); }
+        if (okReply(t)) { finish(true, t); }
         else if (tries < 3) { setTimeout(attempt, tries*2500); }
-        else { finish(false); }
+        else { finish(false, t); }
       }).catch(function(){
         if (tries < 3) setTimeout(attempt, tries*2500); else finish(false);
       });
     })();
-    function finish(ok){
+    function finish(ok, text){
       inflight = false;
-      if (done) done(ok, SID);
+      if (done) done(ok, SID, text || "");
       if (queued) { var q = queued; queued = null; send(q.p, q.d); }
     }
   }
@@ -634,9 +642,14 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
 
   /* The address travels on its own, with no sid and no timestamp, so the two
      sheets cannot be joined. */
-  function submitDrawEmail(addr){
-    if (!addr) return;
-    post({ token:TOKEN, kind:"email", hp:"", email:addr }).catch(function(){});
+  /* The draw entry carries a completion code the server issued when this
+     session finished and passed its timing check. The code proves the study
+     was completed; it carries no session identifier, so the address still
+     cannot be joined to the answers. */
+  function submitDrawEmail(addr, code){
+    if (!addr || !code) return;
+    post({ token:TOKEN, kind:"email", hp:"", email:addr, code:code })
+      .catch(function(){});
   }
 
   /* Checkpoints. Called from render() as each section is left behind. */
@@ -654,15 +667,23 @@ textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:var(-
     D.finished = new Date().toISOString();
     var stat = document.getElementById("sendstat");
     var addr = (D.draw_email || "").trim();
-    record("end", true, function(ok){
-      if (!stat) return;
-      stat.textContent = ok
-        ? "Your answers have been recorded."
-        : "Your answers could not be sent. Please show this code to the "
-          + "researcher: " + SID.slice(0,8);
-      if (!ok) sent = false;
+    record("end", true, function(ok, sid, text){
+      if (!ok) {
+        sent = false;
+        if (stat) stat.textContent = "Your answers could not be sent. Please show "
+          + "this code to the researcher: " + sid.slice(0,8);
+        return;
+      }
+      var code = "";
+      try { code = (JSON.parse(text) || {}).code || ""; }
+      catch(e){ var m = /"code"\s*:\s*"([A-Z0-9]+)"/.exec(text || ""); code = m ? m[1] : ""; }
+      if (stat) stat.textContent = "Your answers have been recorded.";
+      if (addr && code) submitDrawEmail(addr, code);
+      if (addr && !code && stat) {
+        stat.textContent = "Your answers have been recorded. This session did not "
+          + "qualify for the gift card draw.";
+      }
     });
-    if (addr) submitDrawEmail(addr);
   }
 
   var si = 0;
